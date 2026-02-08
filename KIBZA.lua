@@ -31,7 +31,7 @@ local secondBindEnabled = false
 local isBinding1 = false
 local isBinding2 = false
 local activeHighlights = {}
-local activeESP = {} -- Таблиця для збереження об'єктів ESP
+local activeESP = {} -- Table for storing objects ESP
 
 -- === UI Setup ===
 local ScreenGui = Instance.new("ScreenGui")
@@ -370,30 +370,7 @@ createBtn("Teleport to XYZ", Tab2, function(btn)
         btn.Text = "Teleport to XYZ"
     end
 end)
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced & Stable)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced & Stable)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced & Stable with Animated Tracers)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced ESP & Animated Tracers)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced ESP & Tracers Below)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced ESP & Tracers Below)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced ESP & Tracers Below)
-----------------------------------------------------------------------
-----------------------------------------------------------------------
--- TAB 3: IN GAME (Advanced ESP & Tracers)
-----------------------------------------------------------------------
+
 ----------------------------------------------------------------------
 -- TAB 3: IN GAME (Advanced ESP & Tracers)
 ----------------------------------------------------------------------
@@ -492,7 +469,7 @@ local function animateGroup(canvasList, show)
     end
 end
 
--- ГРУПА 1: Wallhop Features
+-- Group 1: Wallhop Features
 local wallhopGroup = {}
 createToggle("Wallhop Features", Tab4, false, function(state) animateGroup(wallhopGroup, state) end)
 
@@ -508,13 +485,13 @@ local w5 = createBtn("2nd Bind: " .. (bindKey2 and bindKey2.Name or "None"), Tab
 wallhopGroup = {w1, w2, w3, w4, w5}
 for _, v in pairs(wallhopGroup) do v.Visible = false; v.ClipsDescendants = true; v.Size = UDim2.new(0.95, 0, 0, 0) end
 
--- ГРУПА 2: Other Tools
+-- Group 2: Other Tools
 local toolsGroup = {}
 createToggle("Other Tools", Tab4, false, function(state) animateGroup(toolsGroup, state) end)
 
 local t1 = createBtn("Fly GUI V3", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() end)
-local t2 = createBtn("Fling GUI", Tab4, function() loadstring(game:HttpGet("https://pastebin.com/raw/86jUyeXT"))() end)
-local t3 = createBtn("Fly With Car GUI", Tab4, function() loadstring(game:HttpGet("https://pastebin.com/raw/6YMLqZyp"))() end)
+local t2 = createBtn("Fling GUI", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/FlingModified.lua"))() end)
+local t3 = createBtn("Fly With Car GUI", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/FlyWithCarModified.lua"))() end)
 
 toolsGroup = {t1, t2, t3}
 for _, v in pairs(toolsGroup) do v.Visible = false; v.ClipsDescendants = true; v.Size = UDim2.new(0.95, 0, 0, 0) end
