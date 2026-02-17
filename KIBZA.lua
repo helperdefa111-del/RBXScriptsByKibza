@@ -552,7 +552,7 @@ createToggle("Other Tools", Tab4, false, function(state) animateGroup(toolsGroup
 local t1 = createBtn("Fly GUI V3", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() end)
 local t2 = createBtn("Fly With Car GUI", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/FlyWithCarModified.lua"))() end)
 local t3 = createBtn("Dex Explorer", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BigBoyTimme/New.Loadstring.Scripts/refs/heads/main/Dex.Explorer"))() end)
-local t4 = createBtn("Piano player", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() end)
+local t4 = createBtn("Piano player", Tab4, function() loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))()
 toolsGroup = {t1, t2, t3, t4}
 for _, v in pairs(toolsGroup) do v.Visible = false; v.ClipsDescendants = true; v.Size = UDim2.new(0.95, 0, 0, 0) end
 
