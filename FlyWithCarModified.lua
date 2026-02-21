@@ -1,4 +1,4 @@
--- Instances (GUI elements - no changes here)
+-- Instances (GUI elements)
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
@@ -35,6 +35,11 @@ local RotateRightButton = Instance.new("TextButton")
 -- Minimize Button
 local MinimizeButton = Instance.new("TextButton")
 
+-- Services
+local PlayerService = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
 -- Global Variables
 local velocityHandlerName = "VehicleFlyVelocity32"
 local gyroHandlerName = "VehicleFlyGyro64"
@@ -52,12 +57,16 @@ local activeConnections = {}
 local controllerEnabled = false
 local movementDirection = {}
 
+-- Keyboard state for E/Q
+local keyUpHeld = false
+local keyDownHeld = false
+
 -- Movement Speeds
-local forwardVelocity = 100 -- Controls both forward/backward magnitude
+local forwardVelocity = 100
 local leftVelocity = 100
 local rightVelocity = 100
-local upVelocity = 100
-local downVelocity = 100
+local upVelocity = 50
+local downVelocity = 50
 local rotationSpeed = 5
 
 -- GUI Minimized State
@@ -68,22 +77,21 @@ local originalMainFramePosition = nil
 local originalButtonPositions = {}
 
 -- Wait for player to load
-local PlayerService = game:GetService("Players")
 local player = PlayerService.LocalPlayer
 if not player then
     player = PlayerService.PlayerAdded:Wait()
 end
 
--- Wait for player GUI to be ready
 player:WaitForChild("PlayerGui")
 
+-- ============================================================
+-- GUI INITIALIZATION
+-- ============================================================
 local function initializeGUI()
-    -- ScreenGui properties
     ScreenGui.Parent = player.PlayerGui
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Name = "VehicleFlyGui"
 
-    -- MainFrame properties
     MainFrame.Parent = ScreenGui
     MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     MainFrame.Position = UDim2.new(0.3, 0, 0.5, -100)
@@ -91,28 +99,24 @@ local function initializeGUI()
     MainFrame.Active = true
     MainFrame.Draggable = true
 
-    -- UIStroke properties for MainFrame
     UIStroke.Parent = MainFrame
     UIStroke.Color = Color3.fromRGB(0, 0, 0)
     UIStroke.Thickness = 2
 
-    -- Title properties
     Title.Parent = MainFrame
     Title.BackgroundTransparency = 1
-    Title.Size = UDim2.new(1, 0, 0.2, 0) -- Original size
-    Title.Position = UDim2.new(0, 0, 0, 0) -- Explicitly set position
+    Title.Size = UDim2.new(1, 0, 0.2, 0)
+    Title.Position = UDim2.new(0, 0, 0, 0)
     Title.Font = Enum.Font.GothamBold
     Title.Text = "Vehicle Fly GUI"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextScaled = true
 
-    -- InnerFrame properties
     InnerFrame.Parent = MainFrame
     InnerFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     InnerFrame.Size = UDim2.new(1, 0, 0.75, 0)
     InnerFrame.Position = UDim2.new(0, 0, 0.2, 0)
 
-    -- SpeedTextBox properties
     SpeedTextBox.Parent = InnerFrame
     SpeedTextBox.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     SpeedTextBox.Position = UDim2.new(0.5, -25, 0.1, 0)
@@ -124,7 +128,6 @@ local function initializeGUI()
     SpeedTextBox.PlaceholderText = "Speed"
     originalButtonPositions[SpeedTextBox] = SpeedTextBox.Position
 
-    -- DecreaseButton properties
     DecreaseButton.Parent = InnerFrame
     DecreaseButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     DecreaseButton.Size = UDim2.new(0.2, 0, 0, 25)
@@ -135,7 +138,6 @@ local function initializeGUI()
     DecreaseButton.TextScaled = true
     originalButtonPositions[DecreaseButton] = DecreaseButton.Position
 
-    -- IncreaseButton properties
     IncreaseButton.Parent = InnerFrame
     IncreaseButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     IncreaseButton.Size = UDim2.new(0.2, 0, 0, 25)
@@ -146,7 +148,6 @@ local function initializeGUI()
     IncreaseButton.TextScaled = true
     originalButtonPositions[IncreaseButton] = IncreaseButton.Position
 
-    -- FlyButton properties
     FlyButton.Parent = InnerFrame
     FlyButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     FlyButton.Size = UDim2.new(0.4, 0, 0, 25)
@@ -157,7 +158,6 @@ local function initializeGUI()
     FlyButton.TextScaled = true
     originalButtonPositions[FlyButton] = FlyButton.Position
 
-    -- FwFButton properties
     FwFButton.Parent = InnerFrame
     FwFButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     FwFButton.Size = UDim2.new(0.4, 0, 0, 25)
@@ -168,7 +168,6 @@ local function initializeGUI()
     FwFButton.TextScaled = true
     originalButtonPositions[FwFButton] = FwFButton.Position
 
-    -- DestroyButton properties
     DestroyButton.Parent = InnerFrame
     DestroyButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     DestroyButton.Size = UDim2.new(0.8, 0, 0, 25)
@@ -179,7 +178,6 @@ local function initializeGUI()
     DestroyButton.TextScaled = true
     originalButtonPositions[DestroyButton] = DestroyButton.Position
 
-    -- ControllerButton properties
     ControllerButton.Parent = InnerFrame
     ControllerButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     ControllerButton.Size = UDim2.new(0.8, 0, 0, 25)
@@ -190,24 +188,21 @@ local function initializeGUI()
     ControllerButton.TextScaled = true
     originalButtonPositions[ControllerButton] = ControllerButton.Position
 
-    -- UICorner properties
     UICorner.CornerRadius = UDim.new(0.1, 0)
     UICorner.Parent = MainFrame
 
-    -- UIGradient properties
     UIGradient.Parent = MainFrame
     UIGradient.Color = ColorSequence.new{
         ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 45, 45)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 75, 75))
     }
 
-    -- ControllerGui properties
+    -- Controller GUI
     ControllerGui.Parent = player.PlayerGui
     ControllerGui.ResetOnSpawn = false
     ControllerGui.Enabled = false
     ControllerGui.Name = "VehicleFlyControllerGui"
 
-    -- ControllerFrame properties
     ControllerFrame.Parent = ControllerGui
     ControllerFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     ControllerFrame.Position = UDim2.new(0.78, -75, 0.5, -75)
@@ -219,7 +214,6 @@ local function initializeGUI()
     ControllerCorner.CornerRadius = UDim.new(0.5, 0)
     ControllerCorner.Parent = ControllerFrame
 
-    -- ForwardButton properties
     ForwardButton.Parent = ControllerFrame
     ForwardButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     ForwardButton.Size = UDim2.new(0, 50, 0, 50)
@@ -230,7 +224,6 @@ local function initializeGUI()
     ForwardButton.TextScaled = true
     originalButtonPositions[ForwardButton] = ForwardButton.Position
 
-    -- BackwardButton properties
     BackwardButton.Parent = ControllerFrame
     BackwardButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     BackwardButton.Size = UDim2.new(0, 50, 0, 50)
@@ -241,7 +234,6 @@ local function initializeGUI()
     BackwardButton.TextScaled = true
     originalButtonPositions[BackwardButton] = BackwardButton.Position
 
-    -- LeftButton properties
     LeftButton.Parent = ControllerFrame
     LeftButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     LeftButton.Size = UDim2.new(0, 50, 0, 50)
@@ -252,7 +244,6 @@ local function initializeGUI()
     LeftButton.TextScaled = true
     originalButtonPositions[LeftButton] = LeftButton.Position
 
-    -- RightButton properties
     RightButton.Parent = ControllerFrame
     RightButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     RightButton.Size = UDim2.new(0, 50, 0, 50)
@@ -263,7 +254,6 @@ local function initializeGUI()
     RightButton.TextScaled = true
     originalButtonPositions[RightButton] = RightButton.Position
 
-    -- AntiLock Button properties
     AntiLockButton.Parent = ControllerFrame
     AntiLockButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     AntiLockButton.Size = UDim2.new(0, 50, 0, 30)
@@ -274,7 +264,6 @@ local function initializeGUI()
     AntiLockButton.TextScaled = true
     originalButtonPositions[AntiLockButton] = AntiLockButton.Position
 
-    -- Pitch Button properties
     PitchButton.Parent = ControllerFrame
     PitchButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     PitchButton.Size = UDim2.new(0, 50, 0, 30)
@@ -290,7 +279,7 @@ local function initializeGUI()
     LeftSideGui.ResetOnSpawn = false
     LeftSideGui.Enabled = false
     LeftSideGui.Name = "VehicleFlyLeftSideGui"
-    
+
     LeftSideFrame.Parent = LeftSideGui
     LeftSideFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     LeftSideFrame.Position = UDim2.new(0.1, 20, 0.5, -75)
@@ -302,7 +291,6 @@ local function initializeGUI()
     LeftSideCorner.CornerRadius = UDim.new(0.5, 0)
     LeftSideCorner.Parent = LeftSideFrame
 
-    -- UpButton Properties
     UpButton.Parent = LeftSideFrame
     UpButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     UpButton.Size = UDim2.new(0, 50, 0, 50)
@@ -313,7 +301,6 @@ local function initializeGUI()
     UpButton.TextScaled = true
     originalButtonPositions[UpButton] = UpButton.Position
 
-    -- DownButton properties
     DownButton.Parent = LeftSideFrame
     DownButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     DownButton.Size = UDim2.new(0, 50, 0, 50)
@@ -324,7 +311,6 @@ local function initializeGUI()
     DownButton.TextScaled = true
     originalButtonPositions[DownButton] = DownButton.Position
 
-    -- RotateLeftButton Properties
     RotateLeftButton.Parent = LeftSideFrame
     RotateLeftButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     RotateLeftButton.Size = UDim2.new(0, 50, 0, 50)
@@ -335,7 +321,6 @@ local function initializeGUI()
     RotateLeftButton.TextScaled = true
     originalButtonPositions[RotateLeftButton] = RotateLeftButton.Position
 
-    -- RotateRightButton Properties
     RotateRightButton.Parent = LeftSideFrame
     RotateRightButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     RotateRightButton.Size = UDim2.new(0, 50, 0, 50)
@@ -346,7 +331,7 @@ local function initializeGUI()
     RotateRightButton.TextScaled = true
     originalButtonPositions[RotateRightButton] = RotateRightButton.Position
 
-    -- Minimize Button Setup
+    -- Minimize Button
     MinimizeButton.Parent = MainFrame
     MinimizeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
@@ -358,10 +343,12 @@ local function initializeGUI()
     MinimizeButton.ZIndex = 2
     originalButtonPositions[MinimizeButton] = MinimizeButton.Position
 
-    -- Store initial position
     originalMainFramePosition = MainFrame.Position
 end
 
+-- ============================================================
+-- FLIGHT CORE
+-- ============================================================
 local function cleanupConnections()
     for _, connection in pairs(activeConnections) do
         if connection and connection.Disconnect then
@@ -371,57 +358,31 @@ local function cleanupConnections()
     activeConnections = {}
 end
 
-local function addDirection(direction)
-    for _, existing in ipairs(movementDirection) do
-        if existing == direction then
-            return
-        end
-    end
-    table.insert(movementDirection, direction)
-end
-
-local function removeDirection(direction)
-    for i = #movementDirection, 1, -1 do
-        if movementDirection[i] == direction then
-            table.remove(movementDirection, i)
-        end
-    end
-end
-
--- Setup Fly Instances
 local function setupFlyInstances(character)
-    if not character or not character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
-    
-    -- Remove any existing handlers first
-    local existingVelocity = character.HumanoidRootPart:FindFirstChild(velocityHandlerName)
-    local existingGyro = character.HumanoidRootPart:FindFirstChild(gyroHandlerName)
-    
-    if existingVelocity then
-        existingVelocity:Destroy()
-    end
-    
-    if existingGyro then
-        existingGyro:Destroy()
-    end
-    
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local rootPart = character.HumanoidRootPart
+
+    local existingVelocity = rootPart:FindFirstChild(velocityHandlerName)
+    local existingGyro = rootPart:FindFirstChild(gyroHandlerName)
+    if existingVelocity then existingVelocity:Destroy() end
+    if existingGyro then existingGyro:Destroy() end
+
     VelocityHandler = Instance.new("BodyVelocity")
     VelocityHandler.Name = velocityHandlerName
-    VelocityHandler.Parent = character.HumanoidRootPart
+    VelocityHandler.Parent = rootPart
     VelocityHandler.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     VelocityHandler.Velocity = Vector3.new()
-    
+
     GyroHandler = Instance.new("BodyGyro")
     GyroHandler.Name = gyroHandlerName
-    GyroHandler.Parent = character.HumanoidRootPart
+    GyroHandler.Parent = rootPart
     GyroHandler.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
     GyroHandler.P = 1000
     GyroHandler.D = 50
-    GyroHandler.CFrame = character.HumanoidRootPart.CFrame
+    GyroHandler.CFrame = rootPart.CFrame
 end
 
--- EnableFlight
 local function EnableFlight()
     local character = player.Character
     if character then
@@ -429,13 +390,11 @@ local function EnableFlight()
     end
 end
 
--- Disable Flight
 local function DisableFlight()
     if VelocityHandler then
         VelocityHandler:Destroy()
         VelocityHandler = nil
     end
-    
     if GyroHandler then
         GyroHandler:Destroy()
         GyroHandler = nil
@@ -450,182 +409,42 @@ end
 player.CharacterAdded:Connect(resetControllerOnSpawn)
 player.CharacterRemoving:Connect(resetControllerOnSpawn)
 
-local function setupButtonConnections()
-    -- Increase and Decrease buttons
-    table.insert(activeConnections, IncreaseButton.MouseButton1Click:Connect(function()
-        local currentSpeed = tonumber(SpeedTextBox.Text) or 1
-        SpeedTextBox.Text = tostring(currentSpeed + 1)
-    end))
-    
-    table.insert(activeConnections, DecreaseButton.MouseButton1Click:Connect(function()
-        local currentSpeed = tonumber(SpeedTextBox.Text) or 1
-        SpeedTextBox.Text = tostring(math.max(1, currentSpeed - 1))
-    end))
-    
-    table.insert(activeConnections, ForwardButton.MouseButton1Down:Connect(function()
-        addDirection("forward")
-    end))
-    
-    table.insert(activeConnections, ForwardButton.MouseButton1Up:Connect(function()
-        removeDirection("forward")
-    end))
-    
-    table.insert(activeConnections, BackwardButton.MouseButton1Down:Connect(function()
-        addDirection("backward")
-    end))
-    
-    table.insert(activeConnections, BackwardButton.MouseButton1Up:Connect(function()
-        removeDirection("backward")
-    end))
-    
-    table.insert(activeConnections, LeftButton.MouseButton1Down:Connect(function()
-        addDirection("left")
-    end))
-    
-    table.insert(activeConnections, LeftButton.MouseButton1Up:Connect(function()
-        removeDirection("left")
-    end))
-    
-    table.insert(activeConnections, RightButton.MouseButton1Down:Connect(function()
-        addDirection("right")
-    end))
-    
-    table.insert(activeConnections, RightButton.MouseButton1Up:Connect(function()
-        removeDirection("right")
-    end))
-    
-    table.insert(activeConnections, UpButton.MouseButton1Down:Connect(function()
-        addDirection("up")
-    end))
-    
-    table.insert(activeConnections, UpButton.MouseButton1Up:Connect(function()
-        removeDirection("up")
-    end))
-    
-    table.insert(activeConnections, DownButton.MouseButton1Down:Connect(function()
-        addDirection("down")
-    end))
-    
-    table.insert(activeConnections, DownButton.MouseButton1Up:Connect(function()
-        removeDirection("down")
-    end))
-    
-    table.insert(activeConnections, RotateLeftButton.MouseButton1Down:Connect(function()
-        addDirection("rotateLeft")
-    end))
-    
-    table.insert(activeConnections, RotateLeftButton.MouseButton1Up:Connect(function()
-        removeDirection("rotateLeft")
-    end))
-    
-    table.insert(activeConnections, RotateRightButton.MouseButton1Down:Connect(function()
-        addDirection("rotateRight")
-    end))
-    
-    table.insert(activeConnections, RotateRightButton.MouseButton1Up:Connect(function()
-        removeDirection("rotateRight")
-    end))
-    
-    table.insert(activeConnections, AntiLockButton.MouseButton1Click:Connect(function()
-        isAntiLockOn = not isAntiLockOn
-        if isAntiLockOn then
-            AntiLockButton.Text = "A-L On"
-            -- Turn off Pitch if A-L is turned on
-            if isPitchOn then
-                PitchButton.Text = "Pitch: Off"
-                isPitchOn = false
-            end
-        else
-            AntiLockButton.Text = "A-L"
-        end
-    end))
-    
-    table.insert(activeConnections, PitchButton.MouseButton1Click:Connect(function()
-        if isAntiLockOn then
-            -- If A-L is on, Pitch cannot be turned on
-            PitchButton.Text = "Pitch: Off"
-            isPitchOn = false
-        else
-            -- Toggle Pitch state
-            isPitchOn = not isPitchOn
-            if isPitchOn then
-                PitchButton.Text = "Pitch: On"
-            else
-                PitchButton.Text = "Pitch: Off"
-            end
-        end
-    end))
-
-    local userInputService = game:GetService("UserInputService")
-    table.insert(activeConnections, userInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then
-            return
-        end
-
-        if input.KeyCode == Enum.KeyCode.E then
-            addDirection("up")
-        elseif input.KeyCode == Enum.KeyCode.Q then
-            addDirection("down")
-        end
-    end))
-
-    table.insert(activeConnections, userInputService.InputEnded:Connect(function(input, gameProcessed)
-        if gameProcessed then
-            return
-        end
-
-        if input.KeyCode == Enum.KeyCode.E then
-            removeDirection("up")
-        elseif input.KeyCode == Enum.KeyCode.Q then
-            removeDirection("down")
-        end
-    end))
-end
-
+-- ============================================================
+-- INPUT HANDLER (RenderStepped)
+-- ============================================================
 local function handleInput()
     local character = player.Character
-    if not character then
-        return
-    end
-    
+    if not character then return end
+
     local humanoid = character:FindFirstChild("Humanoid")
-    if not humanoid then
-        return
-    end
-    
+    if not humanoid then return end
+
     if FlyEnabled and (humanoid.SeatPart or flightWithoutFlyEnabled) then
         local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart then
-            return
-        end
-        
-        if not VelocityHandler then
-            return
-        end
-        
+        if not rootPart or not VelocityHandler then return end
+
         local gyro = rootPart:FindFirstChild(gyroHandlerName)
         local speed = tonumber(SpeedTextBox.Text) or 1
         local velocity = Vector3.new()
-        
-        -- Calculate movement based on current orientation
+
         local function getMovementCFrame()
             if isPitchOn and gyro then
                 return gyro.CFrame
             elseif gyro then
-                -- Flatten the orientation to horizontal plane
                 local lookVector = gyro.CFrame.LookVector
                 return CFrame.new(gyro.Parent.Position, gyro.Parent.Position + Vector3.new(lookVector.X, 0, lookVector.Z))
             end
             return rootPart.CFrame
         end
-        
+
         local movementCFrame = getMovementCFrame()
-        
+
+        -- Button-based movement
         for _, direction in ipairs(movementDirection) do
             if direction == "forward" then
                 velocity += movementCFrame.LookVector * forwardVelocity
             elseif direction == "backward" then
-                velocity += -movementCFrame.LookVector * forwardVelocity -- Changed to use forwardVelocity
+                velocity += -movementCFrame.LookVector * forwardVelocity
             elseif direction == "left" then
                 velocity += movementCFrame.RightVector * -leftVelocity
             elseif direction == "right" then
@@ -640,35 +459,41 @@ local function handleInput()
                 gyro.CFrame = gyro.CFrame * CFrame.Angles(0, math.rad(rotationSpeed), 0)
             end
         end
-        
-        -- Combined movement handling
+
+        -- E / Q keyboard up/down
+        if keyUpHeld then
+            velocity += Vector3.new(0, upVelocity, 0)
+        end
+        if keyDownHeld then
+            velocity += Vector3.new(0, -downVelocity, 0)
+        end
+
+        -- Thumbstick input
         local thumbstickDirection = Vector2.new(0, 0)
-        
-        -- Try to get thumbstick input with error handling
         pcall(function()
             local controlModule = require(player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
             thumbstickDirection = controlModule:GetMoveVector()
         end)
-        
-        if #movementDirection > 0 or thumbstickDirection.Magnitude > 0 then
-            -- Handle both controller buttons AND thumbstick input
+
+        local hasInput = #movementDirection > 0 or keyUpHeld or keyDownHeld or thumbstickDirection.Magnitude > 0
+
+        if hasInput then
             local combinedVelocity = velocity + (
                 movementCFrame.RightVector * thumbstickDirection.X * forwardVelocity * 2 +
                 movementCFrame.LookVector * -thumbstickDirection.Z * forwardVelocity * 2
             )
-            
+
             if isAntiLockOn and humanoid.SeatPart then
                 local seatForward = humanoid.SeatPart.CFrame.LookVector
                 local seatRight = humanoid.SeatPart.CFrame.RightVector
                 local seatUp = humanoid.SeatPart.CFrame.UpVector
                 local seatVelocity = Vector3.new()
-                
-                -- Calculate seat-relative movement
+
                 for _, direction in ipairs(movementDirection) do
                     if direction == "forward" then
                         seatVelocity += seatForward * forwardVelocity
                     elseif direction == "backward" then
-                        seatVelocity += -seatForward * forwardVelocity -- Corrected: Use negative for backward
+                        seatVelocity += -seatForward * forwardVelocity
                     elseif direction == "left" then
                         seatVelocity += -seatRight * leftVelocity
                     elseif direction == "right" then
@@ -679,7 +504,15 @@ local function handleInput()
                         seatVelocity += -seatUp * downVelocity
                     end
                 end
-                
+
+                -- E/Q also respect anti-lock mode
+                if keyUpHeld then
+                    seatVelocity += seatUp * upVelocity
+                end
+                if keyDownHeld then
+                    seatVelocity += -seatUp * downVelocity
+                end
+
                 VelocityHandler.Velocity = seatVelocity * speed
             else
                 VelocityHandler.Velocity = combinedVelocity * speed
@@ -687,15 +520,13 @@ local function handleInput()
         else
             VelocityHandler.Velocity = Vector3.new()
         end
-        
-        -- Update gyro orientation to match camera rotation
+
+        -- Update gyro to match camera
         if not isAntiLockOn then
             local camera = workspace.CurrentCamera
             if isPitchOn and gyro then
-                -- Full camera alignment including pitch
                 gyro.CFrame = camera.CFrame
             elseif gyro then
-                -- Horizontal alignment only (yaw)
                 local flatLookVector = camera.CFrame.LookVector * Vector3.new(1, 0, 1)
                 gyro.CFrame = CFrame.new(gyro.Parent.Position, gyro.Parent.Position + flatLookVector)
             end
@@ -707,90 +538,156 @@ local function handleInput()
     end
 end
 
--- Backup script to reset button positions
+-- ============================================================
+-- KEYBOARD BINDINGS (E = Up, Q = Down)
+-- ============================================================
+local function setupKeyboardBindings()
+    table.insert(activeConnections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.E then
+            keyUpHeld = true
+        elseif input.KeyCode == Enum.KeyCode.Q then
+            keyDownHeld = true
+        end
+    end))
+
+    table.insert(activeConnections, UserInputService.InputEnded:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.E then
+            keyUpHeld = false
+        elseif input.KeyCode == Enum.KeyCode.Q then
+            keyDownHeld = false
+        end
+    end))
+end
+
+-- ============================================================
+-- BUTTON CONNECTIONS
+-- ============================================================
 local function backupButtonPositions()
     for button, originalPosition in pairs(originalButtonPositions) do
-        -- Check if the button exists and its current position is UDim2.new(0, 0, 0, 0)
-        -- We're checking for exact (0,0,0,0) to avoid interfering with intentional movements.
         if button and button.Parent and button.Position == UDim2.new(0, 0, 0, 0) then
             button.Position = originalPosition
         end
     end
 end
 
--- Event Listener Setup
-local function setupEventListeners()
-    setupButtonConnections()
-    table.insert(activeConnections, game:GetService("RunService").RenderStepped:Connect(handleInput))
-    -- Connect the backup script to Heartbeat for continuous checking
-    table.insert(activeConnections, game:GetService("RunService").Heartbeat:Connect(backupButtonPositions))
+local function setupButtonConnections()
+    table.insert(activeConnections, IncreaseButton.MouseButton1Click:Connect(function()
+        local currentSpeed = tonumber(SpeedTextBox.Text) or 1
+        SpeedTextBox.Text = tostring(currentSpeed + 1)
+    end))
+
+    table.insert(activeConnections, DecreaseButton.MouseButton1Click:Connect(function()
+        local currentSpeed = tonumber(SpeedTextBox.Text) or 1
+        SpeedTextBox.Text = tostring(math.max(1, currentSpeed - 1))
+    end))
+
+    -- Direction buttons helper
+    local function addDirectionButton(button, dirName)
+        table.insert(activeConnections, button.MouseButton1Down:Connect(function()
+            table.insert(movementDirection, dirName)
+        end))
+        table.insert(activeConnections, button.MouseButton1Up:Connect(function()
+            for i = #movementDirection, 1, -1 do
+                if movementDirection[i] == dirName then
+                    table.remove(movementDirection, i)
+                end
+            end
+        end))
+    end
+
+    addDirectionButton(ForwardButton, "forward")
+    addDirectionButton(BackwardButton, "backward")
+    addDirectionButton(LeftButton, "left")
+    addDirectionButton(RightButton, "right")
+    addDirectionButton(UpButton, "up")
+    addDirectionButton(DownButton, "down")
+    addDirectionButton(RotateLeftButton, "rotateLeft")
+    addDirectionButton(RotateRightButton, "rotateRight")
+
+    table.insert(activeConnections, AntiLockButton.MouseButton1Click:Connect(function()
+        isAntiLockOn = not isAntiLockOn
+        if isAntiLockOn then
+            AntiLockButton.Text = "A-L On"
+            if isPitchOn then
+                PitchButton.Text = "Pitch: Off"
+                isPitchOn = false
+            end
+        else
+            AntiLockButton.Text = "A-L"
+        end
+    end))
+
+    table.insert(activeConnections, PitchButton.MouseButton1Click:Connect(function()
+        if isAntiLockOn then
+            PitchButton.Text = "Pitch: Off"
+            isPitchOn = false
+        else
+            isPitchOn = not isPitchOn
+            PitchButton.Text = isPitchOn and "Pitch: On" or "Pitch: Off"
+        end
+    end))
 end
 
--- Cleanup (MODIFIED to be more robust)
+-- ============================================================
+-- EVENT LISTENER SETUP
+-- ============================================================
+local function setupEventListeners()
+    setupButtonConnections()
+    setupKeyboardBindings()
+    table.insert(activeConnections, RunService.RenderStepped:Connect(handleInput))
+    table.insert(activeConnections, RunService.Heartbeat:Connect(backupButtonPositions))
+end
+
+-- ============================================================
+-- CLEANUP
+-- ============================================================
 local function cleanup()
     DisableFlight()
     cleanupConnections()
     movementDirection = {}
+    keyUpHeld = false
+    keyDownHeld = false
     controllerEnabled = false
-    
-    if seatConnection then
-        seatConnection:Disconnect()
-    end
-    
-    if unseatConnection then
-        unseatConnection:Disconnect()
-    end
-    
+
+    if seatConnection then seatConnection:Disconnect() end
+    if unseatConnection then unseatConnection:Disconnect() end
     seatConnection = nil
     unseatConnection = nil
     FlyEnabled = false
     flightWithoutFlyEnabled = false
     FwFButton.Text = "FwF"
-    
-    -- Destroy ALL relevant GUIs
-    if ScreenGui then
-        ScreenGui:Destroy()
-    end
-    
-    if ControllerGui then
-        ControllerGui:Destroy()
-    end
-    
-    if LeftSideGui then
-        LeftSideGui:Destroy()
-    end
-    
-    -- Clear original button positions on cleanup
+
+    if ScreenGui then ScreenGui:Destroy() end
+    if ControllerGui then ControllerGui:Destroy() end
+    if LeftSideGui then LeftSideGui:Destroy() end
+
     originalButtonPositions = {}
 end
 
--- Initialize the GUI and set up event listeners
+-- ============================================================
+-- INITIALIZE
+-- ============================================================
 local function initialize()
     initializeGUI()
     setupEventListeners()
-    
-    -- Connect the Destroy button
+
     DestroyButton.MouseButton1Click:Connect(cleanup)
-    
-    -- FlyButton Click
+
+    -- Fly Button
     FlyButton.MouseButton1Click:Connect(function()
         FlyEnabled = not FlyEnabled
         local character = player.Character
         local humanoid = character and character:FindFirstChild("Humanoid")
-        
+
         if FlyEnabled then
             FlyButton.Text = "UnFly"
             if flightWithoutFlyEnabled then
                 EnableFlight()
             elseif humanoid then
-                if seatConnection then
-                    seatConnection:Disconnect()
-                end
-                
-                if unseatConnection then
-                    unseatConnection:Disconnect()
-                end
-                
+                if seatConnection then seatConnection:Disconnect() end
+                if unseatConnection then unseatConnection:Disconnect() end
+
                 if humanoid.SeatPart then
                     EnableFlight()
                 else
@@ -800,7 +697,7 @@ local function initialize()
                         end
                     end)
                 end
-                
+
                 unseatConnection = humanoid:GetPropertyChangedSignal("SeatPart"):Connect(function()
                     if not humanoid.SeatPart then
                         DisableFlight()
@@ -810,29 +707,18 @@ local function initialize()
         else
             FlyButton.Text = "Fly"
             DisableFlight()
-            
-            if seatConnection then
-                seatConnection:Disconnect()
-            end
-            
-            if unseatConnection then
-                unseatConnection:Disconnect()
-            end
-            
+            if seatConnection then seatConnection:Disconnect() end
+            if unseatConnection then unseatConnection:Disconnect() end
             seatConnection = nil
             unseatConnection = nil
         end
     end)
-    
-    -- FwFButton Click
+
+    -- FwF Button
     FwFButton.MouseButton1Click:Connect(function()
         flightWithoutFlyEnabled = not flightWithoutFlyEnabled
-        if flightWithoutFlyEnabled then
-            FwFButton.Text = "FwF On"
-        else
-            FwFButton.Text = "FwF"
-        end
-        
+        FwFButton.Text = flightWithoutFlyEnabled and "FwF On" or "FwF"
+
         if FlyEnabled and not flightWithoutFlyEnabled then
             local character = player.Character
             local humanoid = character and character:FindFirstChild("Humanoid")
@@ -841,53 +727,51 @@ local function initialize()
             end
         end
     end)
-    
+
+    -- Controller Button
     ControllerButton.MouseButton1Click:Connect(function()
         controllerEnabled = not controllerEnabled
         ControllerGui.Enabled = controllerEnabled
         LeftSideGui.Enabled = controllerEnabled
     end)
-    
-    -- Minimize Button Logic
+
+    -- Minimize Button
     MinimizeButton.MouseButton1Click:Connect(function()
         isGuiMinimized = not isGuiMinimized
-        
+
         if isGuiMinimized then
             MinimizeButton.Text = "⇩"
-            -- Store the current position BEFORE minimizing
             originalMainFramePosition = MainFrame.Position
-            
-            -- Animate the MainFrame to slide UPWARDS, keeping enough height for the title
+
             MainFrame:TweenSizeAndPosition(
-                UDim2.new(0, 200, 0, 50), -- New Size (height is 50 for the title)
-                UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 
-                         MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset - 50) / 2), -- Center vertically
+                UDim2.new(0, 200, 0, 50),
+                UDim2.new(
+                    MainFrame.Position.X.Scale, MainFrame.Position.X.Offset,
+                    MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset - 50) / 2
+                ),
                 Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true
             )
-            
-            -- Make sure the Title is visible and scales to fill the minimized frame's height
-            Title.Visible = true 
-            Title.Size = UDim2.new(1, 0, 1, 0) -- Title takes full height of the 50px minimized frame
-            Title.Position = UDim2.new(0, 0, 0, 0) -- Ensure title is at the top
-            
-            InnerFrame.Visible = false -- Hide the rest of the GUI
+
+            Title.Visible = true
+            Title.Size = UDim2.new(1, 0, 1, 0)
+            Title.Position = UDim2.new(0, 0, 0, 0)
+            InnerFrame.Visible = false
         else
             MinimizeButton.Text = "⇧"
-            -- Animate the MainFrame to slide back to original size/position
+
             MainFrame:TweenSizeAndPosition(
-                UDim2.new(0, 200, 0, 230), -- Original Size
-                originalMainFramePosition, -- Use the STORED position
+                UDim2.new(0, 200, 0, 230),
+                originalMainFramePosition,
                 Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true
             )
-            
-            -- Restore Title to its original size and position, make InnerFrame visible again
+
             Title.Visible = true
-            Title.Size = UDim2.new(1, 0, 0.2, 0) -- Revert title to original size (20% of frame height)
-            Title.Position = UDim2.new(0, 0, 0, 0) -- Ensure title is at the top
+            Title.Size = UDim2.new(1, 0, 0.2, 0)
+            Title.Position = UDim2.new(0, 0, 0, 0)
             InnerFrame.Visible = true
         end
     end)
 end
 
--- Start the script
+-- Start
 initialize()
