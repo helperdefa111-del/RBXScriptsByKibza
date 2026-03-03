@@ -149,7 +149,6 @@ end
 -- === QUICK TP BUTTONS ===
 local quickTps = {
 	{emoji="🏕️",pos=Vector3.new(337,154,2766)},
-	{emoji="❄️",pos=Vector3.new(229,130,1836)},
 	{emoji="🏜️",pos=Vector3.new(986,-200,473)},
 	{emoji="🌳",pos=Vector3.new(-177,-480,1567)},
 	{emoji="⛓️",pos=Vector3.new(-1884,-647,2272)},
@@ -163,6 +162,7 @@ local quickTps = {
 	{emoji="🏞️",pos=Vector3.new(1221,4,2072)},
 	{emoji="🌑",pos=Vector3.new(362,-96,3299)},
 	{emoji="🟪",pos=Vector3.new(-7122,-711,-2541)},
+	{emoji="💵",pos=Vector3.new(920,30,-710)},
 	{emoji="🔁",rejoin=true},
 }
 
