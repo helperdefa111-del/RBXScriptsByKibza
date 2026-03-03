@@ -162,6 +162,7 @@ local quickTps = {
 	{emoji="🏪",pos=Vector3.new(1250,31,-700)},
 	{emoji="🏞️",pos=Vector3.new(1221,4,2072)},
 	{emoji="🌑",pos=Vector3.new(362,-96,3299)},
+	{emoji="🟪",pos=Vector3.new(-7122,-711,-2541)},
 	{emoji="🔁",rejoin=true},
 }
 
