@@ -30,6 +30,7 @@ selectionPart.Shape = Enum.PartType.Cylinder
 selectionPart.Anchored = true
 selectionPart.CanCollide = false
 selectionPart.CastShadow = false
+selectionPart.CanQuery = false
 selectionPart.Transparency = 0.5
 selectionPart.Color = Color3.fromRGB(0, 0, 0)
 selectionPart.Material = Enum.Material.ForceField
