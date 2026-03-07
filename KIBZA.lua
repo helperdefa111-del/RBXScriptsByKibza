@@ -427,6 +427,18 @@ Mouse.Button1Down:Connect(function()
     end
 end)
 
+-- Обробка натискання клавіш (для бінда)
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if isBindingRestore then
+        restoreKey = input.KeyCode
+        isBindingRestore = false
+        -- Тут restoreBtn оновиться через змінну в GUI частині нижче
+    elseif input.KeyCode == restoreKey then
+        restoreLastObject()
+    end
+end)
+
 local function removeESP(character)
     if character:FindFirstChild("ESP_Highlight") then character.ESP_Highlight:Destroy() end
     if character:FindFirstChild("ESP_Billboard") then character.ESP_Billboard:Destroy() end
@@ -471,11 +483,13 @@ local function applyESP(player)
     if player.Character then task.spawn(setup, player.Character) end
 end
 
+--- ЕЛЕМЕНТИ ТРЕТЬОЇ ВКЛАДКИ ---
+
 createToggle("Auto Aim", Tab3, false, function(s) autoAimEnabled = s end)
 createToggle("Enemies Only", Tab3, false, function(s) autoAimEnemiesEnabled = s end)
 createToggle("Noclip", Tab3, false, function(s) noclipEnabled = s end)
 
--- --- СЕКЦІЯ DELETE OBJECTS З АНІМАЦІЄЮ ---
+-- СЕКЦІЯ DELETE OBJECTS
 local restoreBtn
 createToggle("Delete Objects", Tab3, false, function(state)
     deleteEnabled = state
@@ -488,10 +502,17 @@ createToggle("Delete Objects", Tab3, false, function(state)
     end
 end)
 
-restoreBtn = createBtn("↳ Restore Bind: " .. restoreKey.Name, Tab3, function(b) isBindingRestore = true; b.Text = "..." end)
+restoreBtn = createBtn("Restore Bind: " .. restoreKey.Name, Tab3, function(b) 
+    isBindingRestore = true
+    b.Text = "..." 
+    task.spawn(function()
+        while isBindingRestore do task.wait() end
+        b.Text = "Restore Bind: " .. restoreKey.Name
+    end)
+end)
 restoreBtn.Visible = false; restoreBtn.ClipsDescendants = true; restoreBtn.Size = UDim2.new(0.95, 0, 0, 0)
--- ---------------------------------------
 
+-- СЕКЦІЯ ESP
 local tracerBtn
 createToggle("Advanced ESP", Tab3, false, function(state)
     espEnabled = state
@@ -505,9 +526,10 @@ createToggle("Advanced ESP", Tab3, false, function(state)
     for _, p in pairs(Players:GetPlayers()) do if p.Character then if state then applyESP(p) else removeESP(p.Character) end end end
 end)
 
-tracerBtn = createToggle("↳ Tracers", Tab3, false, function(state) tracersEnabled = state end)
+tracerBtn = createToggle("Tracers", Tab3, false, function(state) tracersEnabled = state end)
 tracerBtn.Visible = false; tracerBtn.ClipsDescendants = true; tracerBtn.Size = UDim2.new(0.95, 0, 0, 0)
 
+-- ТЕЛЕПОРТАЦІЯ
 createBtn("Save Position", Tab3, function(btn)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         savedPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
@@ -515,6 +537,11 @@ createBtn("Save Position", Tab3, function(btn)
     end
 end)
 createBtn("Teleport Saved", Tab3, function() if savedPosition and LocalPlayer.Character then LocalPlayer.Character.HumanoidRootPart.CFrame = savedPosition end end)
+
+-- НОВА КНОПКА ДЛЯ BRIGHT REMOVE
+createBtn("Bright Remove", Tab3, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/BrightRemove.lua"))()
+end)
 
 Players.PlayerAdded:Connect(applyESP)
 
@@ -549,14 +576,36 @@ for _, v in pairs(wallhopGroup) do v.Visible = false; v.ClipsDescendants = true;
 
 local toolsGroup = {}
 createToggle("Other Tools", Tab4, false, function(state) animateGroup(toolsGroup, state) end)
-local t1 = createBtn("Fly GUI V3", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() end)
-local t2 = createBtn("Fly With Car GUI", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/FlyWithCarModified.lua"))() end)
-local t3 = createBtn("Dex Explorer", Tab4, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BigBoyTimme/New.Loadstring.Scripts/refs/heads/main/Dex.Explorer"))() end)
-local t4 = createBtn("Piano player", Tab4, function() loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))()
-end)
-toolsGroup = {t1, t2, t3, t4}
-for _, v in pairs(toolsGroup) do v.Visible = false; v.ClipsDescendants = true; v.Size = UDim2.new(0.95, 0, 0, 0) end
 
+local t1 = createBtn("Fly GUI V3", Tab4, function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() 
+end)
+
+local t2 = createBtn("Fly With Car GUI", Tab4, function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/FlyWithCarModified.lua"))() 
+end)
+
+local t3 = createBtn("Dex Explorer", Tab4, function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/BigBoyTimme/New.Loadstring.Scripts/refs/heads/main/Dex.Explorer"))() 
+end)
+
+local t4 = createBtn("Piano player", Tab4, function() 
+    loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))()
+end)
+
+-- Нова кнопка Remote Spy
+local t5 = createBtn("Remote Spy", Tab4, function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/StolenRemoteSpy.lua"))() 
+end)
+
+-- Оновлений список групи з новою кнопкою t5
+toolsGroup = {t1, t2, t3, t4, t5}
+
+for _, v in pairs(toolsGroup) do 
+    v.Visible = false; 
+    v.ClipsDescendants = true; 
+    v.Size = UDim2.new(0.95, 0, 0, 0) 
+end
 ----------------------------------------------------------------------
 -- TAB 5: TROLL (Fling, Play Off & Advanced Follow)
 ----------------------------------------------------------------------
