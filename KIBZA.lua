@@ -594,8 +594,8 @@ local t4 = createBtn("Piano player", Tab4, function()
 end)
 
 -- Нова кнопка Remote Spy
-local t5 = createBtn("Remote Spy", Tab4, function() 
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/helperdefa111-del/RBXScriptsByKibza/refs/heads/main/StolenRemoteSpy.lua"))() 
+local t5 = createBtn("Anti AFK", Tab4, function() 
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/evxncodes/mainroblox/main/anti-afk", true))()
 end)
 
 -- Оновлений список групи з новою кнопкою t5
