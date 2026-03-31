@@ -5,25 +5,31 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
 local localPlayer = Players.LocalPlayer
--- Очікуємо завантаження PlayerGui
 local playerGui = localPlayer:WaitForChild("PlayerGui", 10)
 
--- Перевірка наявності івентів (щоб скрипт не "впав")
+-- === CLEANUP (ВИДАЛЕННЯ СТАРИХ КОПІЙ) ===
+-- Шукаємо і видаляємо старе GUI, якщо воно вже є
+local oldGui = playerGui:FindFirstChild("UltimateGrabber_V7_MOD")
+if oldGui then
+    oldGui:Destroy()
+end
+
+-- Шукаємо і видаляємо старий візуалізатор радіусу
+if Workspace:FindFirstChild("RadiusVisualizer") then
+    Workspace.RadiusVisualizer:Destroy()
+end
+
+-- === REST OF THE SCRIPT ===
 local events = ReplicatedStorage:WaitForChild("Events", 5)
 local grabHandler = events and events:WaitForChild("GrabHandler", 5)
 local grabFolder = Workspace:WaitForChild("Grab", 5)
 
 if not grabHandler or not grabFolder then
-    warn("Критична помилка: Не знайдено GrabHandler або папку Grab!")
+    warn("Критична помилка: Не знайдено GrabHandler!")
     return
 end
 
--- === RADIUS VISUALIZER ===
--- Видаляємо старе коло, якщо воно залишилося після перезапуску
-if Workspace:FindFirstChild("RadiusVisualizer") then
-    Workspace.RadiusVisualizer:Destroy()
-end
-
+-- === RADIUS VISUALIZER SETUP ===
 local selectionPart = Instance.new("Part")
 selectionPart.Name = "RadiusVisualizer"
 selectionPart.Shape = Enum.PartType.Cylinder
@@ -38,7 +44,7 @@ selectionPart.Size = Vector3.new(1, 100, 100)
 selectionPart.Orientation = Vector3.new(0, 0, 90)
 selectionPart.Parent = Workspace
 
-RunService.RenderStepped:Connect(function()
+local visualUpdate = RunService.RenderStepped:Connect(function()
     local char = localPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         selectionPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, 0, math.rad(90))
@@ -46,19 +52,14 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- === GUI SETUP ===
--- Видаляємо старе GUI перед створенням нового
-if playerGui:FindFirstChild("UniversalGrabber_V7") then
-    playerGui.UniversalGrabber_V7:Destroy()
-end
-
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UniversalGrabber_V7"
+screenGui.Name = "UltimateGrabber_V7_MOD" -- Унікальна назва для очистки
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 350, 0, 420)
-frame.Position = UDim2.new(0.5, -175, 0.5, -210)
+frame.Size = UDim2.new(0, 350, 0, 480)
+frame.Position = UDim2.new(0.5, -175, 0.5, -240)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -67,10 +68,10 @@ frame.Parent = screenGui
 
 local function createTextBox(placeholder, pos, size)
     local tb = Instance.new("TextBox")
-    tb.Size = size or UDim2.new(1, -20, 0, 35)
+    tb.Size = size or UDim2.new(1, -20, 0, 30)
     tb.Position = pos
     tb.PlaceholderText = placeholder
-    tb.PlaceholderColor3 = Color3.fromRGB(0, 0, 0)
+    tb.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
     tb.Text = ""
     tb.TextScaled = true
     tb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
@@ -81,13 +82,13 @@ end
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
-title.Text = "Ultimate Grabber V7.1"
+title.Text = "Ultimate Grabber V7.2 MOD"
 title.TextScaled = true
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = frame
 
--- Toggle BRING ALL
+-- Елементи керування
 local bringAllToggle = Instance.new("TextButton")
 bringAllToggle.Size = UDim2.new(1, -20, 0, 30)
 bringAllToggle.Position = UDim2.new(0, 10, 0, 40)
@@ -108,17 +109,17 @@ local mainObjectNameBox = createTextBox("Назва (напр. MaterialPart)", U
 mainObjectNameBox.Text = "MaterialPart"
 
 local filterFrame = Instance.new("Frame")
-filterFrame.Size = UDim2.new(1, -20, 0, 80)
-filterFrame.Position = UDim2.new(0, 10, 0, 115)
+filterFrame.Size = UDim2.new(1, -20, 0, 70)
+filterFrame.Position = UDim2.new(0, 10, 0, 110)
 filterFrame.BackgroundTransparency = 1
 filterFrame.Parent = frame
 
-local materialStringBox = createTextBox("MaterialString (Stone)", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 35))
+local materialStringBox = createTextBox("Material (Stone/Uranium)", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 30))
 materialStringBox.Parent = filterFrame
 
 local filterToggle = Instance.new("TextButton")
-filterToggle.Size = UDim2.new(1, 0, 0, 35)
-filterToggle.Position = UDim2.new(0, 0, 0, 40)
+filterToggle.Size = UDim2.new(1, 0, 0, 30)
+filterToggle.Position = UDim2.new(0, 0, 0, 35)
 filterToggle.Text = "FILTER: OFF"
 filterToggle.TextScaled = true
 filterToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
@@ -132,8 +133,11 @@ filterToggle.MouseButton1Click:Connect(function()
     filterToggle.BackgroundColor3 = isFilterActive and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
 end)
 
-local radiusBox = createTextBox("Радіус дії", UDim2.new(0, 10, 0, 200))
+local radiusBox = createTextBox("Радіус дії", UDim2.new(0, 10, 0, 185))
 radiusBox.Text = "50"
+
+local limitBox = createTextBox("Ліміт штук (0 = безлім)", UDim2.new(0, 10, 0, 220))
+limitBox.Text = "0"
 
 radiusBox:GetPropertyChangedSignal("Text"):Connect(function()
     local r = tonumber(radiusBox.Text)
@@ -148,13 +152,13 @@ end)
 local coords = {}
 local coordNames = {"X", "Y", "Z"}
 for i, name in ipairs(coordNames) do
-    local tb = createTextBox(name, UDim2.new(0, 10 + (i-1)*110, 0, 240), UDim2.new(0, 100, 0, 35))
+    local tb = createTextBox(name, UDim2.new(0, 10 + (i-1)*110, 0, 255), UDim2.new(0, 100, 0, 30))
     coords[name] = tb
 end
 
 local getPosButton = Instance.new("TextButton")
-getPosButton.Size = UDim2.new(1, -20, 0, 35)
-getPosButton.Position = UDim2.new(0, 10, 0, 280)
+getPosButton.Size = UDim2.new(1, -20, 0, 30)
+getPosButton.Position = UDim2.new(0, 10, 0, 290)
 getPosButton.Text = "Get My Pos"
 getPosButton.TextScaled = true
 getPosButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
@@ -162,15 +166,26 @@ getPosButton.TextColor3 = Color3.new(1, 1, 1)
 getPosButton.Parent = frame
 
 local mainButton = Instance.new("TextButton")
-mainButton.Size = UDim2.new(1, -20, 0, 55)
-mainButton.Position = UDim2.new(0, 10, 0, 325)
+mainButton.Size = UDim2.new(1, -20, 0, 45)
+mainButton.Position = UDim2.new(0, 10, 0, 330)
 mainButton.Text = "START BRINGING"
 mainButton.TextScaled = true
 mainButton.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 mainButton.TextColor3 = Color3.new(1, 1, 1)
 mainButton.Parent = frame
 
+local stopButton = Instance.new("TextButton")
+stopButton.Size = UDim2.new(1, -20, 0, 45)
+stopButton.Position = UDim2.new(0, 10, 0, 380)
+stopButton.Text = "STOP PROCESS"
+stopButton.TextScaled = true
+stopButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+stopButton.TextColor3 = Color3.new(1, 1, 1)
+stopButton.Visible = false
+stopButton.Parent = frame
+
 -- === LOGIC ===
+local isStopping = false
 
 mainObjectNameBox:GetPropertyChangedSignal("Text"):Connect(function()
     filterFrame.Visible = (mainObjectNameBox.Text == "MaterialPart")
@@ -186,13 +201,29 @@ getPosButton.MouseButton1Click:Connect(function()
     end
 end)
 
-local function bringObject(targetName, x, y, z, radius)
+stopButton.MouseButton1Click:Connect(function()
+    isStopping = true
+    stopButton.Text = "STOPPING..."
+end)
+
+local function bringObject(targetName, x, y, z, radius, limit)
     local targetPos = Vector3.new(x, y, z)
     local char = localPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local myPos = char.HumanoidRootPart.Position
+    
+    isStopping = false
+    stopButton.Visible = true
+    stopButton.Text = "STOP PROCESS"
+    
+    local count = 0
+    local objects = grabFolder:GetChildren()
 
-    for _, obj in pairs(grabFolder:GetChildren()) do
+    for _, obj in pairs(objects) do
+        if isStopping then break end
+        if limit > 0 and count >= limit then break end
+
+        local myPos = char.HumanoidRootPart.Position
+
         if isBringAll or (obj.Name == targetName) then
             if not isBringAll and targetName == "MaterialPart" and isFilterActive then
                 local config = obj:FindFirstChild("Configuration")
@@ -210,6 +241,8 @@ local function bringObject(targetName, x, y, z, radius)
             local owner = obj:FindFirstChild("Owner")
             if owner and owner.Value ~= nil and owner.Value ~= localPlayer then continue end
 
+            count = count + 1
+            
             if obj:IsA("Model") and not obj.PrimaryPart then
                 obj.PrimaryPart = innerPart
             end
@@ -227,15 +260,23 @@ local function bringObject(targetName, x, y, z, radius)
             task.wait(0.05)
         end
     end
+    
+    stopButton.Visible = false
+    isStopping = false
 end
 
 mainButton.MouseButton1Click:Connect(function()
     local r = tonumber(radiusBox.Text) or 50
+    local l = tonumber(limitBox.Text) or 0
     local x, y, z = tonumber(coords["X"].Text), tonumber(coords["Y"].Text), tonumber(coords["Z"].Text)
+    
     if x and y and z then
-        bringObject(mainObjectNameBox.Text, x, y, z, r)
+        bringObject(mainObjectNameBox.Text, x, y, z, r, l)
     end
 end)
 
--- Initial radius
-selectionPart.Size = Vector3.new(1, tonumber(radiusBox.Text)*2, tonumber(radiusBox.Text)*2)
+-- Важливо: при видаленні GUI через Destroy() також зупинити цикл візуалізації
+screenGui.Destroying:Connect(function()
+    if visualUpdate then visualUpdate:Disconnect() end
+    if selectionPart then selectionPart:Destroy() end
+end)
