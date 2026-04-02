@@ -6,15 +6,14 @@ local RunService = game:GetService("RunService")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui", 10)
+local mouse = localPlayer:GetMouse()
 
 -- === CLEANUP (ВИДАЛЕННЯ СТАРИХ КОПІЙ) ===
--- Шукаємо і видаляємо старе GUI, якщо воно вже є
 local oldGui = playerGui:FindFirstChild("UltimateGrabber_V7_MOD")
 if oldGui then
     oldGui:Destroy()
 end
 
--- Шукаємо і видаляємо старий візуалізатор радіусу
 if Workspace:FindFirstChild("RadiusVisualizer") then
     Workspace.RadiusVisualizer:Destroy()
 end
@@ -53,13 +52,13 @@ end)
 
 -- === GUI SETUP ===
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UltimateGrabber_V7_MOD" -- Унікальна назва для очистки
+screenGui.Name = "UltimateGrabber_V7_MOD"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 350, 0, 480)
-frame.Position = UDim2.new(0.5, -175, 0.5, -240)
+frame.Size = UDim2.new(0, 350, 0, 520) -- Трохи збільшив висоту
+frame.Position = UDim2.new(0.5, -175, 0.5, -260)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -88,10 +87,27 @@ title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = frame
 
--- Елементи керування
+-- === НОВА КНОПКА: TP ON CLICK ===
+local tpOnClickToggle = Instance.new("TextButton")
+tpOnClickToggle.Size = UDim2.new(1, -20, 0, 30)
+tpOnClickToggle.Position = UDim2.new(0, 10, 0, 40)
+tpOnClickToggle.Text = "TP ON CLICK: OFF"
+tpOnClickToggle.TextScaled = true
+tpOnClickToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+tpOnClickToggle.TextColor3 = Color3.new(1, 1, 1)
+tpOnClickToggle.Parent = frame
+
+local isTpOnClick = false
+tpOnClickToggle.MouseButton1Click:Connect(function()
+    isTpOnClick = not isTpOnClick
+    tpOnClickToggle.Text = isTpOnClick and "TP ON CLICK: ON" or "TP ON CLICK: OFF"
+    tpOnClickToggle.BackgroundColor3 = isTpOnClick and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+end)
+
+-- Елементи керування (зсунуті вниз)
 local bringAllToggle = Instance.new("TextButton")
 bringAllToggle.Size = UDim2.new(1, -20, 0, 30)
-bringAllToggle.Position = UDim2.new(0, 10, 0, 40)
+bringAllToggle.Position = UDim2.new(0, 10, 0, 75)
 bringAllToggle.Text = "BRING ALL: OFF"
 bringAllToggle.TextScaled = true
 bringAllToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
@@ -105,12 +121,12 @@ bringAllToggle.MouseButton1Click:Connect(function()
     bringAllToggle.BackgroundColor3 = isBringAll and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
 end)
 
-local mainObjectNameBox = createTextBox("Назва (напр. MaterialPart)", UDim2.new(0, 10, 0, 75))
+local mainObjectNameBox = createTextBox("Назва (напр. MaterialPart)", UDim2.new(0, 10, 0, 110))
 mainObjectNameBox.Text = "MaterialPart"
 
 local filterFrame = Instance.new("Frame")
 filterFrame.Size = UDim2.new(1, -20, 0, 70)
-filterFrame.Position = UDim2.new(0, 10, 0, 110)
+filterFrame.Position = UDim2.new(0, 10, 0, 145)
 filterFrame.BackgroundTransparency = 1
 filterFrame.Parent = frame
 
@@ -133,10 +149,10 @@ filterToggle.MouseButton1Click:Connect(function()
     filterToggle.BackgroundColor3 = isFilterActive and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
 end)
 
-local radiusBox = createTextBox("Радіус дії", UDim2.new(0, 10, 0, 185))
+local radiusBox = createTextBox("Радіус дії", UDim2.new(0, 10, 0, 220))
 radiusBox.Text = "50"
 
-local limitBox = createTextBox("Ліміт штук (0 = безлім)", UDim2.new(0, 10, 0, 220))
+local limitBox = createTextBox("Ліміт штук (0 = безлім)", UDim2.new(0, 10, 0, 255))
 limitBox.Text = "0"
 
 radiusBox:GetPropertyChangedSignal("Text"):Connect(function()
@@ -152,13 +168,13 @@ end)
 local coords = {}
 local coordNames = {"X", "Y", "Z"}
 for i, name in ipairs(coordNames) do
-    local tb = createTextBox(name, UDim2.new(0, 10 + (i-1)*110, 0, 255), UDim2.new(0, 100, 0, 30))
+    local tb = createTextBox(name, UDim2.new(0, 10 + (i-1)*110, 0, 290), UDim2.new(0, 100, 0, 30))
     coords[name] = tb
 end
 
 local getPosButton = Instance.new("TextButton")
 getPosButton.Size = UDim2.new(1, -20, 0, 30)
-getPosButton.Position = UDim2.new(0, 10, 0, 290)
+getPosButton.Position = UDim2.new(0, 10, 0, 325)
 getPosButton.Text = "Get My Pos"
 getPosButton.TextScaled = true
 getPosButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
@@ -167,7 +183,7 @@ getPosButton.Parent = frame
 
 local mainButton = Instance.new("TextButton")
 mainButton.Size = UDim2.new(1, -20, 0, 45)
-mainButton.Position = UDim2.new(0, 10, 0, 330)
+mainButton.Position = UDim2.new(0, 10, 0, 365)
 mainButton.Text = "START BRINGING"
 mainButton.TextScaled = true
 mainButton.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
@@ -176,7 +192,7 @@ mainButton.Parent = frame
 
 local stopButton = Instance.new("TextButton")
 stopButton.Size = UDim2.new(1, -20, 0, 45)
-stopButton.Position = UDim2.new(0, 10, 0, 380)
+stopButton.Position = UDim2.new(0, 10, 0, 415)
 stopButton.Text = "STOP PROCESS"
 stopButton.TextScaled = true
 stopButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
@@ -206,6 +222,40 @@ stopButton.MouseButton1Click:Connect(function()
     stopButton.Text = "STOPPING..."
 end)
 
+-- Функція для обробки одного об'єкта (використовується в обох режимах)
+local function grabAndTeleport(obj, targetPos)
+    local char = localPlayer.Character
+    local innerPart = obj:FindFirstChild("Part") or obj:FindFirstChildWhichIsA("BasePart")
+    if not innerPart or not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+    char.HumanoidRootPart.CFrame = CFrame.new(innerPart.Position + Vector3.new(0, 3, 0))
+    task.wait(0.12)
+    grabHandler:InvokeServer(innerPart, "Grab", innerPart.Position)
+    task.wait(0.08)
+    
+    if obj:IsA("Model") then
+        if not obj.PrimaryPart then obj.PrimaryPart = innerPart end
+        obj:SetPrimaryPartCFrame(CFrame.new(targetPos))
+    else
+        obj.CFrame = CFrame.new(targetPos)
+    end
+end
+
+-- Логіка кліку миші
+mouse.Button1Down:Connect(function()
+    if not isTpOnClick then return end
+    local target = mouse.Target
+    if not target then return end
+
+    local obj = target:FindFirstAncestorOfClass("Model") or target
+    if obj:IsDescendantOf(grabFolder) then
+        local x, y, z = tonumber(coords["X"].Text), tonumber(coords["Y"].Text), tonumber(coords["Z"].Text)
+        if x and y and z then
+            grabAndTeleport(obj, Vector3.new(x, y, z))
+        end
+    end
+end)
+
 local function bringObject(targetName, x, y, z, radius, limit)
     local targetPos = Vector3.new(x, y, z)
     local char = localPlayer.Character
@@ -222,8 +272,6 @@ local function bringObject(targetName, x, y, z, radius, limit)
         if isStopping then break end
         if limit > 0 and count >= limit then break end
 
-        local myPos = char.HumanoidRootPart.Position
-
         if isBringAll or (obj.Name == targetName) then
             if not isBringAll and targetName == "MaterialPart" and isFilterActive then
                 local config = obj:FindFirstChild("Configuration")
@@ -236,27 +284,13 @@ local function bringObject(targetName, x, y, z, radius, limit)
             
             local innerPart = obj:FindFirstChild("Part") or obj:FindFirstChildWhichIsA("BasePart")
             if not innerPart then continue end
-            if (myPos - innerPart.Position).Magnitude > radius then continue end
+            if (char.HumanoidRootPart.Position - innerPart.Position).Magnitude > radius then continue end
 
             local owner = obj:FindFirstChild("Owner")
             if owner and owner.Value ~= nil and owner.Value ~= localPlayer then continue end
 
             count = count + 1
-            
-            if obj:IsA("Model") and not obj.PrimaryPart then
-                obj.PrimaryPart = innerPart
-            end
-
-            char.HumanoidRootPart.CFrame = CFrame.new(innerPart.Position + Vector3.new(0, 3, 0))
-            task.wait(0.12)
-            grabHandler:InvokeServer(innerPart, "Grab", innerPart.Position)
-            task.wait(0.08)
-            
-            if obj:IsA("Model") then
-                obj:SetPrimaryPartCFrame(CFrame.new(targetPos))
-            else
-                obj.CFrame = CFrame.new(targetPos)
-            end
+            grabAndTeleport(obj, targetPos)
             task.wait(0.05)
         end
     end
@@ -275,7 +309,6 @@ mainButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Важливо: при видаленні GUI через Destroy() також зупинити цикл візуалізації
 screenGui.Destroying:Connect(function()
     if visualUpdate then visualUpdate:Disconnect() end
     if selectionPart then selectionPart:Destroy() end
